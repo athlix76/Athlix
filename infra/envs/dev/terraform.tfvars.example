@@ -1,0 +1,24 @@
+# Copy to terraform.tfvars (gitignored). No secrets here, ever: secret values go into
+# Secrets Manager with `aws secretsmanager put-secret-value` (docs/aws-setup.md).
+
+alert_emails       = ["you@example.com"]
+monthly_budget_usd = 120
+
+# Origins of the admin web app while developing (CORS and presigned uploads).
+admin_origins      = ["http://localhost:5050"]
+app_deep_link_base = "https://dev.example.com"
+
+# Optional custom domains (regional ACM certificate in ap-south-1). Leave empty to use
+# the execute-api URLs.
+certificate_arn = ""
+api_domain_name = ""
+ws_domain_name  = ""
+
+# Set false if infra/bootstrap has not been applied in this account yet.
+ws_access_logs = true
+
+# Leave out scheduled jobs whose code is not deployed yet, e.g. ["subscription.expire"].
+disabled_jobs = []
+
+# true only while running admincli or a one-off query through scripts/tunnel.sh.
+enable_ops_tunnel = false

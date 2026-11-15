@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Athlix admin panel">
+  <!--
+    Strict CSP. Keep it in step with the CloudFront response-headers policy
+    (see README.md). The deploy step replaces http://localhost:8080 with the
+    real API origin and https://*.s3.ap-south-1.amazonaws.com with the media
+    bucket origin (terraform output media_bucket_origin). frame-ancestors only
+    works as a response header, so it is set there, not here.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.s3.ap-south-1.amazonaws.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8080 https://fonts.gstatic.com https://*.s3.ap-south-1.amazonaws.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'">
+  <!-- Signed proof URLs must never leak through the Referer header. -->
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Athlix Admin</title>
+</head>
+<body>
+  <noscript>The Athlix admin panel needs JavaScript.</noscript>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

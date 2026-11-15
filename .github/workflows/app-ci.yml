@@ -1,0 +1,36 @@
+name: app-ci
+
+on:
+  pull_request:
+    paths: ["app/**", "admin/**", ".github/workflows/app-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["app/**", "admin/**", ".github/workflows/app-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [app, admin]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.24.5
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+      - name: build admin web
+        if: matrix.project == 'admin'
+        run: flutter build web --release --dart-define=API_BASE_URL=https://api.example.com/v1

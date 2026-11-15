@@ -1,0 +1,7 @@
+# Local, per-operator files (no secrets in them, but they name an account).
+envs/*/backend.hcl
+# Saved plans can contain resource attributes from state.
+*.tfplan
+tfplan
+# Bootstrap uses local state (see bootstrap/README.md); keep a copy safe, never commit it.
+bootstrap/terraform.tfstate*

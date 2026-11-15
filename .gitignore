@@ -1,0 +1,53 @@
+# secrets (local dev keys) and env files
+.secrets.local.json
+**/.secrets.local.json
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+key.properties
+
+# backend build output and local data
+backend/dist/
+backend/.localstorage/
+backend/coverage.out
+
+# terraform
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+infra/**/*.tfvars
+!infra/**/*.tfvars.example
+infra/**/crash.log
+
+# flutter / dart
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/ios/Pods/
+**/ios/.symlinks/
+**/android/.gradle/
+**/android/local.properties
+
+# editors / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# never commit data exports
+*.csv
+# ...except tiny hand-written test fixtures the tests read
+!backend/cmd/admincli/testdata/*.csv
+*.sql.gz
+exports/

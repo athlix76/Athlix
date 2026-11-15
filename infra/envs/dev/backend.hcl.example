@@ -1,0 +1,7 @@
+# Copy to backend.hcl (it holds no secret) and fill in the bucket
+# name printed by infra/bootstrap. Then: terraform init -backend-config=backend.hcl
+bucket         = "athlix-tfstate-<account_id>"
+key            = "athlix/dev/terraform.tfstate"
+region         = "ap-south-1"
+dynamodb_table = "athlix-tfstate-lock"
+encrypt        = true

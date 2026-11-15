@@ -1,0 +1,143 @@
+-- 0003: events, registrations, listing fee rules, listing orders, payment webhook log.
+-- Athlix NEVER collects entry fees. entry_fee_paise is informational; players pay organisers directly.
+-- Athlix only collects the listing fee (listing_orders) from the organiser.
+
+CREATE TABLE events (
+  id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organiser_id           BIGINT UNSIGNED NOT NULL,
+  sport_id               INT UNSIGNED    NOT NULL,
+  title                  VARCHAR(120)    NOT NULL,
+  description            TEXT            NULL,
+  event_type             ENUM('tournament','trial','camp','match','other') NOT NULL DEFAULT 'tournament',
+  participant_type       ENUM('individual','team') NOT NULL DEFAULT 'individual',
+  team_size_min          SMALLINT UNSIGNED NULL,
+  team_size_max          SMALLINT UNSIGNED NULL,
+  competition_level      ENUM('open','school','college','club','district','state','national','other') NOT NULL DEFAULT 'open',
+  gender_category        ENUM('open','male','female','mixed') NOT NULL DEFAULT 'open',
+  age_min                SMALLINT UNSIGNED NULL,
+  age_max                SMALLINT UNSIGNED NULL,
+  venue_name             VARCHAR(120)    NOT NULL,
+  address_line           VARCHAR(255)    NULL,
+  city                   VARCHAR(64)     NOT NULL,
+  district               VARCHAR(64)     NULL,
+  state                  VARCHAR(64)     NOT NULL,
+  pincode                CHAR(6)         NULL,
+  latitude               DECIMAL(9,6)    NULL,
+  longitude              DECIMAL(9,6)    NULL,
+  starts_at              DATETIME(3)     NOT NULL,
+  ends_at                DATETIME(3)     NOT NULL,
+  registration_deadline  DATETIME(3)     NOT NULL,
+  entry_fee_paise        INT UNSIGNED    NOT NULL DEFAULT 0,
+  payment_modes          JSON            NOT NULL,
+  payment_instructions   VARCHAR(500)    NULL,
+  max_slots              INT UNSIGNED    NOT NULL,
+  rules                  TEXT            NULL,
+  prize_info             VARCHAR(1000)   NULL,
+  contact_name           VARCHAR(80)     NOT NULL,
+  contact_phone_enc      VARBINARY(255)  NOT NULL,
+  contact_phone_last4    CHAR(4)         NOT NULL,
+  key_version            SMALLINT UNSIGNED NOT NULL,
+  banner_upload_id       BIGINT UNSIGNED NULL,
+  status                 ENUM('draft','pending_payment','pending_review','published','rejected','cancelled','completed','removed') NOT NULL DEFAULT 'draft',
+  rejection_reason       VARCHAR(500)    NULL,
+  cancel_reason          VARCHAR(500)    NULL,
+  registrations_count    INT UNSIGNED    NOT NULL DEFAULT 0,
+  featured_at            DATETIME(3)     NULL,
+  published_at           DATETIME(3)     NULL,
+  cancelled_at           DATETIME(3)     NULL,
+  completed_at           DATETIME(3)     NULL,
+  created_at             DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at             DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_events_organiser (organiser_id, status),
+  KEY idx_events_discovery (status, sport_id, starts_at),
+  KEY idx_events_location (status, state, district, city),
+  KEY idx_events_featured (status, featured_at),
+  FULLTEXT KEY ft_events (title, description, venue_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE event_registrations (
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id        BIGINT UNSIGNED NOT NULL,
+  user_id         BIGINT UNSIGNED NOT NULL,
+  team_name       VARCHAR(80)     NULL,
+  team_members    JSON            NULL,
+  status          ENUM('registered','waitlisted','withdrawn','rejected') NOT NULL DEFAULT 'registered',
+  payment_status  ENUM('unpaid','paid_online','paid_offline','waived') NOT NULL DEFAULT 'unpaid',
+  payment_note    VARCHAR(200)    NULL,
+  created_at      DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at      DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_registration (event_id, user_id),
+  KEY idx_registrations_user (user_id, status),
+  KEY idx_registrations_event (event_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Listing fee = clamp(percent_bp/10000 * entry_fee_paise * max_slots, min_fee, max_fee) + GST.
+-- Most specific active rule wins: (sport+type) > sport > type > default (both NULL); ties by priority DESC.
+CREATE TABLE listing_fee_rules (
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name             VARCHAR(80)  NOT NULL,
+  sport_id         INT UNSIGNED NULL,
+  event_type       ENUM('tournament','trial','camp','match','other') NULL,
+  percent_bp       INT UNSIGNED NOT NULL,
+  min_fee_paise    INT UNSIGNED NOT NULL DEFAULT 0,
+  max_fee_paise    INT UNSIGNED NULL,
+  free_event_fee_paise INT UNSIGNED NOT NULL DEFAULT 0,
+  gst_bp           INT UNSIGNED NOT NULL DEFAULT 1800,
+  priority         INT          NOT NULL DEFAULT 0,
+  active           TINYINT(1)   NOT NULL DEFAULT 1,
+  effective_from   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  effective_to     DATETIME(3)  NULL,
+  created_by       BIGINT UNSIGNED NULL,
+  created_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_fee_rules_match (active, sport_id, event_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- The fee is snapshotted here so later config changes never change a past order.
+CREATE TABLE listing_orders (
+  id                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id              BIGINT UNSIGNED NOT NULL,
+  organiser_id          BIGINT UNSIGNED NOT NULL,
+  fee_rule_id           INT UNSIGNED    NOT NULL,
+  entry_fee_paise       INT UNSIGNED    NOT NULL,
+  max_slots             INT UNSIGNED    NOT NULL,
+  percent_bp            INT UNSIGNED    NOT NULL,
+  gst_bp                INT UNSIGNED    NOT NULL,
+  base_fee_paise        INT UNSIGNED    NOT NULL,
+  gst_paise             INT UNSIGNED    NOT NULL,
+  total_paise           INT UNSIGNED    NOT NULL,
+  currency              CHAR(3)         NOT NULL DEFAULT 'INR',
+  provider              VARCHAR(16)     NOT NULL,
+  provider_order_id     VARCHAR(64)     NULL,
+  provider_payment_id   VARCHAR(64)     NULL,
+  status                ENUM('created','paid','failed','expired','refunded','partially_refunded') NOT NULL DEFAULT 'created',
+  refund_paise          INT UNSIGNED    NOT NULL DEFAULT 0,
+  provider_refund_id    VARCHAR(64)     NULL,
+  refund_reason         VARCHAR(255)    NULL,
+  paid_at               DATETIME(3)     NULL,
+  refunded_at           DATETIME(3)     NULL,
+  expires_at            DATETIME(3)     NOT NULL,
+  created_at            DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at            DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_listing_provider_order (provider, provider_order_id),
+  KEY idx_listing_event (event_id, status),
+  KEY idx_listing_status (status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Idempotency log for payment-provider webhooks. Payloads are NOT stored (they contain payer PII).
+CREATE TABLE payment_webhook_events (
+  id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  provider           VARCHAR(16)  NOT NULL,
+  provider_event_id  VARCHAR(128) NOT NULL,
+  event_type         VARCHAR(64)  NOT NULL,
+  entity_id          VARCHAR(64)  NULL,
+  status             ENUM('received','processed','ignored','failed') NOT NULL DEFAULT 'received',
+  received_at        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  processed_at       DATETIME(3)  NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_webhook_event (provider, provider_event_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

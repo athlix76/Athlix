@@ -1,0 +1,96 @@
+name: terraform-plan
+
+# On pull requests that touch infra/**: terraform fmt check, validate for every root, and a
+# plan of infra/envs/dev. AWS access is through GitHub OIDC (no access keys): the role is
+# created by infra/bootstrap and may only be assumed by pull requests of this repository.
+#
+# Repository secrets (Settings > Secrets and variables > Actions > Secrets):
+#   AWS_PLAN_ROLE_ARN  plan_role_arn output of infra/bootstrap
+#   TF_STATE_BUCKET    state_bucket output of infra/bootstrap
+#   DEV_TFVARS         full contents of infra/envs/dev/terraform.tfvars (holds no secret
+#                      values; it is a secret only so alert emails stay out of the repo)
+#
+# Actions are pinned to exact release tags. Pinning to commit SHAs is stronger still; do
+# that if the repository's policy requires it.
+
+on:
+  pull_request:
+    paths: ["infra/**", ".github/workflows/terraform-plan.yml"]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: terraform-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_REGION: ap-south-1
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff infra
+
+      # The Lambda zips must exist: Terraform hashes them while validating and planning.
+      - uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Build Lambda zips
+        run: make -C backend build-lambda
+
+      - name: terraform validate (bootstrap, prod, dev)
+        run: |
+          for root in infra/bootstrap infra/envs/prod infra/envs/dev; do
+            echo "::group::validate $root"
+            terraform -chdir="$root" init -backend=false -no-color
+            terraform -chdir="$root" validate -no-color
+            echo "::endgroup::"
+          done
+
+      # Pull requests from forks get no secrets and no OIDC token: they stop after validate.
+      - name: Configure AWS credentials (OIDC)
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
+          role-session-name: terraform-plan-${{ github.run_id }}
+          aws-region: ap-south-1
+
+      - name: Write backend.hcl and terraform.tfvars
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: infra/envs/dev
+        env:
+          STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          DEV_TFVARS: ${{ secrets.DEV_TFVARS }}
+        run: |
+          {
+            printf 'bucket         = "%s"\n' "$STATE_BUCKET"
+            printf 'key            = "athlix/dev/terraform.tfstate"\n'
+            printf 'region         = "ap-south-1"\n'
+            printf 'dynamodb_table = "athlix-tfstate-lock"\n'
+            printf 'encrypt        = true\n'
+          } > backend.hcl
+          printf '%s\n' "$DEV_TFVARS" > terraform.tfvars
+
+      - name: terraform plan (dev)
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: infra/envs/dev
+        run: |
+          terraform init -reconfigure -backend-config=backend.hcl -no-color
+          terraform plan -lock-timeout=5m -no-color

@@ -1,0 +1,16 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - "**/*.g.dart"
+    - web/**
+
+linter:
+  rules:
+    - avoid_print
+    - prefer_final_locals
+    - prefer_single_quotes
+    - always_declare_return_types
+    - cancel_subscriptions
+    - close_sinks

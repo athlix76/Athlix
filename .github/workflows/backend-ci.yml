@@ -1,0 +1,38 @@
+name: backend-ci
+
+on:
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "gofmt needed:"; echo "$out"; exit 1; fi
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test -race -count=1 ./...
+      - name: build lambdas
+        run: make build-lambda
+      - name: no secrets or full Aadhaar fields in code
+        run: |
+          ! grep -rnE 'AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC )?PRIVATE KEY-----' --include='*.go' --include='*.json' --include='*.sql' . || (echo "credential-looking string found"; exit 1)
+          ! grep -rniE 'aadhaar_(number|no)\b' --include='*.go' --include='*.sql' . || (echo "full Aadhaar field found"; exit 1)

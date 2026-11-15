@@ -1,0 +1,24 @@
+# Copy to terraform.tfvars (gitignored). No secrets here, ever: secret values go into
+# Secrets Manager with `aws secretsmanager put-secret-value` (docs/aws-setup.md).
+
+alert_emails       = ["oncall@example.com"]
+monthly_budget_usd = 450
+
+admin_origins      = ["https://admin.example.com"]
+app_deep_link_base = "https://example.com"
+
+# Custom domains: request a regional ACM certificate in ap-south-1 first, then fill in
+# its ARN (arn:aws:acm:ap-south-1:ACCOUNT_ID:certificate/ID) and the two host names.
+certificate_arn = ""
+api_domain_name = ""
+ws_domain_name  = ""
+
+enable_cdn = false
+
+# Requires the Lambda concurrency quota raised to 1,000. Use -1 for all three until then.
+api_reserved_concurrency    = 100
+ws_reserved_concurrency     = 50
+worker_reserved_concurrency = 10
+
+disabled_jobs     = []
+enable_ops_tunnel = false

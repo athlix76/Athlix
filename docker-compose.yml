@@ -1,0 +1,19 @@
+# Local dependencies for the backend: MySQL 8 and Redis 7.
+# Usage: docker compose up -d   then   cd backend && make dev-secrets migrate run
+# Development only. Credentials here are throwaway local defaults, never used in AWS.
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: athlix
+      MYSQL_USER: athlix
+      MYSQL_PASSWORD: athlix-local
+      MYSQL_ROOT_PASSWORD: athlix-local-root
+    ports: ["127.0.0.1:3306:3306"]
+    command: ["--default-time-zone=+00:00"]
+    volumes: [mysql-data:/var/lib/mysql]
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6379:6379"]
+volumes:
+  mysql-data:
