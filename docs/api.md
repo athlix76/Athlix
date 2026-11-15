@@ -213,7 +213,7 @@ Everything below is off when `location.enabled` is false (every event behaves as
 | GET | `/geo/states` | user | → `[State]` (active, by name) |
 | GET | `/geo/districts` | user | `?stateId` (required) → `[District]` (active, by name) |
 | GET | `/me/location-identities` | verified | → LocationIdentities |
-| POST | `/me/location-identities` | verified | LocationIdentityInput → LocationIdentity (`pending`) |
+| POST | `/me/location-identities` | verified | LocationIdentityInput → 201 LocationIdentity (`pending`) |
 | DELETE | `/me/location-identities/:id` | verified, owner | → 204. `pending` or `verified` → `withdrawn`; proof deleted at once |
 
 ```jsonc

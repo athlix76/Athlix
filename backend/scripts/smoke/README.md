@@ -36,6 +36,25 @@ python3 -I scripts/smoke/core_flows_test.py http://127.0.0.1:8080/v1
 
 It ends with `ALL 28 CHECKS PASSED`. Same local setup as below.
 
+## Admin flows test (`admin_flows_test.py`, 38 checks)
+
+Everything the admin panel does, through its API: dashboard; user search (masked mobile),
+detail, suspend / unsuspend; a player's residence proof uploaded, queued, opened (signed URL)
+and approved; organiser verification rejected with a note, resubmitted and approved; tournament
+review (pending -> approve -> feature / unfeature -> remove; reject with the configured listing
+refund); listing orders and fee preview; reports resolved with `hide` (post disappears) and
+`dismiss`; config change + wrong type (422) + history; a limited role (`users.read` only) gets
+403 on config, suspend and reports; a disabled admin is cut off; user tokens cannot call admin
+APIs; the audit log records the actions. Needs the same admin env vars as `smoke_test.py`
+(a super_admin); it waits for fresh TOTP windows, so it takes about 1.5 minutes.
+
+```bash
+SMOKE_ADMIN_EMAIL=... SMOKE_ADMIN_PASSWORD='...' SMOKE_ADMIN_TOTP_URI='otpauth://...' \
+  python3 -I scripts/smoke/admin_flows_test.py http://127.0.0.1:8080/v1
+```
+
+It creates users, events, a role and a (then disabled) admin in the local DB.
+
 ## Run it
 
 Needs Python 3 (standard library only), a migrated local DB and the API running with

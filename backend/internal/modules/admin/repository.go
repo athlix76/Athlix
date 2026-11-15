@@ -267,7 +267,7 @@ func (r *repo) dashboard(ctx context.Context, now time.Time) (Dashboard, error) 
  (SELECT COALESCE(SUM(total_paise), 0) FROM listing_orders WHERE status IN ('paid', 'refunded', 'partially_refunded') AND paid_at >= ?),
  (SELECT COALESCE(SUM(refund_paise), 0) FROM listing_orders WHERE refunded_at >= ?),
  (SELECT COUNT(*) FROM subscriptions WHERE status IN ('active', 'grace') AND expires_at > ?),
- (SELECT COUNT(*) FROM communities WHERE status = 'active')`,
+ (SELECT COUNT(*) FROM conversations WHERE type = 'community' AND status = 'active')`,
 		week, now, month, month, now).Scan(
 		&d.Users.Total, &d.Users.Verified, &d.Users.Minors, &d.Users.NewLast7Days,
 		&d.Events.Published, &d.Events.PendingReview, &d.Events.Upcoming,

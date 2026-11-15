@@ -282,7 +282,9 @@ func TestPermissionsEnforced(t *testing.T) {
 
 func TestDashboard(t *testing.T) {
 	_, mock, r := setup(t, nil, "dashboard.read")
-	mock.ExpectQuery(`SELECT\s+\(SELECT COUNT\(\*\) FROM users WHERE status <> 'deleted'\)`).
+	// Communities live in conversations (type = 'community'); there is no communities table.
+	mock.ExpectQuery(`SELECT\s+\(SELECT COUNT\(\*\) FROM users WHERE status <> 'deleted'\)[\s\S]*`+
+		`\(SELECT COUNT\(\*\) FROM conversations WHERE type = 'community' AND status = 'active'\)`).
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows(strings.Split("a b c d e f g h i j k l m", " ")).AddRow(10, 8, 2, 3, 4, 1, 2, 5, 6, 150000, 2000, 7, 9))
 	b := expect(t, testutil.Request(r, "GET", "/v1/admin/dashboard", nil, nil), 200)
