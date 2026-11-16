@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Athlix navy (app/lib/core/theme/app_theme.dart AppTheme.navy). -->
+    <color name="athlix_navy">#031727</color>
+</resources>

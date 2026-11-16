@@ -44,6 +44,14 @@ DigiLocker return deep link:
 
 Put `GoogleService-Info.plist` at `ios/Runner/GoogleService-Info.plist` (gitignored). Never commit it.
 
+## Branding (icon, launch screen)
+
+Generated from `app/tool/brand`. After `flutter create`, restore every `Icon-App-*.png` in
+`Assets.xcassets/AppIcon.appiconset` (opaque, no alpha channel), the three `LaunchImage*.png` in
+`LaunchImage.imageset`, and in `Base.lproj/LaunchScreen.storyboard` the view background colour
+`red=0.0118 green=0.0902 blue=0.1529` (Athlix navy `#031727`) and `<image name="LaunchImage"
+width="120" height="120"/>`. `CFBundleDisplayName` is `Athlix`.
+
 ## CocoaPods, not Swift Package Manager
 
 `app/pubspec.yaml` sets `flutter: config: enable-swift-package-manager: false`. Under SwiftPM,

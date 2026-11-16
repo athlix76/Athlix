@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ system splash: Athlix navy with the glass icon (kept inside the 160dp circle mask).
+     values-night-v31 must match: the night qualifier outranks the API level. -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/athlix_navy</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_v31</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/athlix_navy</item>
+    </style>
+</resources>

@@ -8,6 +8,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/busy_button.dart';
 import '../application/auth_flow_controller.dart';
 import '../data/auth_api.dart';
+import '../../../core/widgets/athlix_logo.dart';
 
 class PhoneScreen extends ConsumerStatefulWidget {
   const PhoneScreen({super.key});
@@ -45,6 +46,8 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           padding: const EdgeInsets.all(24),
           children: [
             const SizedBox(height: 48),
+            const Align(alignment: Alignment.centerLeft, child: AthlixLogo(size: 72)),
+            const SizedBox(height: 16),
             Text('Athlix', style: Theme.of(context).textTheme.displaySmall),
             const SizedBox(height: 8),
             const Text('Sign in with your mobile number'),

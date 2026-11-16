@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/config_providers.dart';
 import '../../../core/session/session_controller.dart';
 import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/athlix_logo.dart';
 
 /// Shown while bootstrap and the session load. The router leaves this screen
 /// on its own once both are known.
@@ -30,6 +31,8 @@ class SplashScreen extends ConsumerWidget {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    const AthlixLogo(size: 96),
+                    const SizedBox(height: 16),
                     Text('Athlix', style: Theme.of(context).textTheme.displaySmall),
                     const SizedBox(height: 24),
                     const CircularProgressIndicator(),

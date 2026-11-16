@@ -36,6 +36,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/athlix_icon.png
   config:
     # iOS uses CocoaPods, not Swift Package Manager: under SwiftPM, Xcode 26+ refuses
     # SwiftyGif (pulled in by file_picker -> DKPhotoGallery) for its old Swift tools version.

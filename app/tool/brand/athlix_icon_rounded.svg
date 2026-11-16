@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#050C1A"/><stop offset="1" stop-color="#0A1E30"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.05" r="0.95">
+      <stop offset="0" stop-color="#11788A" stop-opacity="1"/>
+      <stop offset="0.4" stop-color="#0C4F63" stop-opacity="0.8"/>
+      <stop offset="0.8" stop-color="#08253A" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#050C1A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#0A2A3E" stop-opacity="0.9"/><stop offset="1" stop-color="#081A2B" stop-opacity="0.95"/>
+    </linearGradient>
+    <!-- The X is cyan on its left ends and blue on its right ends (measured from the concept). -->
+    <linearGradient id="x" gradientUnits="userSpaceOnUse" x1="290" y1="0" x2="720" y2="0">
+      <stop offset="0" stop-color="#00C8E4"/><stop offset="1" stop-color="#1696F0"/>
+    </linearGradient>
+  </defs>
+  <clipPath id="r"><rect width="1024" height="1024" rx="184"/></clipPath><g clip-path="url(#r)"><rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#glow)"/><rect x="125" y="123" width="773" height="773" rx="143" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.13" stroke-width="2.5"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="369" y1="369" x2="646" y2="712" stroke="url(#x)" stroke-width="40"/>
+    <line x1="720" y1="369" x2="290" y2="712" stroke="url(#x)" stroke-width="40"/>
+    <path d="M326 698 L569 319 L609 698" stroke="#FFFFFF" stroke-width="48"/>
+    <line x1="460" y1="698" x2="569" y2="319" stroke="#FFFFFF" stroke-width="48"/>
+  </g></g></svg>

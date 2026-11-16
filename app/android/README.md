@@ -71,6 +71,22 @@ default. Allow it **in the debug manifest only** (release builds keep HTTPS-only
 <application android:usesCleartextTraffic="true"/>
 ```
 
+## Branding (icon, splash, name)
+
+Generated from `app/tool/brand` (see its README). After `flutter create`, restore:
+
+- `android:label="Athlix"` in `AndroidManifest.xml` (the template writes `athlix`).
+- `mipmap-*/ic_launcher.png` (legacy), `mipmap-*/ic_launcher_foreground.png` and
+  `ic_launcher_background.png`, and `mipmap-anydpi-v26/ic_launcher.xml` (adaptive icon).
+- `values/colors.xml` with `athlix_navy` `#031727`.
+- `drawable/launch_background.xml` and `drawable-v21/launch_background.xml`: navy plus the centred
+  `@drawable/splash_logo` (`drawable-*/splash_logo.png`).
+- `values/styles.xml` and `values-night/styles.xml`: `NormalTheme` window background
+  `@color/athlix_navy` (no white flash before the first frame).
+- `values-v31/styles.xml` **and** `values-night-v31/styles.xml` (the night qualifier outranks the
+  API level): `windowSplashScreenBackground` navy, `windowSplashScreenAnimatedIcon`
+  `@drawable/splash_icon_v31`.
+
 ## Emulator tips
 
 - Typing with the Mac keyboard needs `hw.keyboard=yes` in

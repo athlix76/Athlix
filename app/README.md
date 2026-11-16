@@ -56,6 +56,13 @@ Platform registration is in the android / ios READMEs.
 Device location is used once to build the query (`lat`, `lng`, `radiusKm`), kept in memory only, and never
 stored, logged or sent anywhere else. If permission is denied the radius chips are hidden.
 
+## Branding
+
+The logo is the "Glass icon" concept; its vector source and render scripts are in
+[tool/brand](tool/brand/README.md). In the app it is `AthlixLogo` (`lib/core/widgets/athlix_logo.dart`,
+asset `assets/brand/athlix_icon.png`), shown on the splash and sign-in screens. Launcher icons and
+native splash screens are in the platform folders (see android/README.md and ios/README.md).
+
 ## Firebase
 
 Firebase native files are environment specific and **gitignored**:
