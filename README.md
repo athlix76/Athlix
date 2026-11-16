@@ -27,6 +27,9 @@ AI coding agents: read [CLAUDE.md](CLAUDE.md) (rules) first.
 
 ## Quick start (backend)
 
+Step-by-step commands for running everything on a Mac (database, API, emulator, app, admin)
+are in [RUN-LOCAL.txt](RUN-LOCAL.txt).
+
 ```bash
 docker compose up -d                 # MySQL 8 + Redis 7 for local dev
 cd backend && make dev-secrets migrate run

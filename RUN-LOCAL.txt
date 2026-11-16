@@ -1,0 +1,109 @@
+ATHLIX - HOW TO RUN EVERYTHING ON YOUR MAC (LOCAL)
+==================================================
+
+Everything runs on your own computer. Nothing here touches AWS or a live database.
+Open a NEW terminal window for each numbered step that says "(keep it open)".
+
+
+BEFORE THE FIRST RUN (one time only)
+------------------------------------
+You need: Docker Desktop, Go 1.24+, Flutter, Android Studio (with the Athlix_API35 emulator).
+
+    cd ~/Downloads/athlix/backend
+    make dev-secrets          # creates .secrets.local.json with local keys (never commit it)
+
+Then do step 1, and after it:
+
+    cd ~/Downloads/athlix/backend
+    make migrate              # creates the tables + default settings
+
+Admin login for the admin panel (only if you don't have one yet):
+
+    cd ~/Downloads/athlix/backend
+    make create-admin EMAIL=you@example.com NAME="You" ROLE=super_admin
+    # It prints a one-time password and a TOTP link. Add the TOTP link to
+    # Google Authenticator (or any authenticator app) to get the 6-digit code.
+
+
+1) START THE DATABASE (MySQL + Redis)
+-------------------------------------
+Open Docker Desktop first and wait until it says "running". Then:
+
+    cd ~/Downloads/athlix
+    docker compose up -d
+
+Check:  docker ps   -> you should see athlix-mysql-1 and athlix-redis-1 "Up"
+
+
+2) START THE BACKEND API   (keep it open)
+-----------------------------------------
+    cd ~/Downloads/athlix/backend
+    make run
+
+Check in a browser:  http://localhost:8080/v1/health   -> {"data":{"status":"ok"}}
+If new migrations were added since your last run, run "make migrate" once before "make run".
+
+
+3) START THE ANDROID EMULATOR   (keep it open)
+----------------------------------------------
+    ~/Library/Android/sdk/emulator/emulator -avd Athlix_API35
+
+Wait until the Android home screen shows. (You can also start it from
+Android Studio > Device Manager > Athlix_API35 > Play.)
+Only run ONE emulator at a time.
+
+
+4) START THE MOBILE APP   (keep it open)
+----------------------------------------
+    ~/Library/Android/sdk/platform-tools/adb reverse tcp:8080 tcp:8080
+    cd ~/Downloads/athlix/app
+    flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8080/v1 --dart-define=ENV=local
+
+The first build takes a few minutes. While it runs, in this terminal:
+    r  = hot reload (after you change code)
+    R  = full restart
+    q  = quit the app
+
+Sign in on the phone:
+    Mobile number : any 10-digit number starting with 6, 7, 8 or 9 (e.g. 9876543210)
+    OTP           : 123456   (fixed code, works only locally)
+
+
+5) START THE ADMIN PANEL (optional)   (keep it open)
+----------------------------------------------------
+    cd ~/Downloads/athlix/admin
+    flutter run -d chrome --web-port 5050 --release
+
+Opens http://localhost:5050 in Chrome. Log in with the admin email, password and the
+6-digit code from your authenticator app.
+Must be port 5050 and --release (a debug build shows a blank white page).
+
+
+STOPPING EVERYTHING
+-------------------
+    App / admin  : press q in their terminals
+    Backend      : press Ctrl + C in its terminal
+    Emulator     : close its window
+    Database     : cd ~/Downloads/athlix && docker compose down
+                   (your data is kept; it comes back on the next "docker compose up -d")
+
+
+RUNNING THE TESTS (optional)
+----------------------------
+    cd ~/Downloads/athlix/backend && go test ./...
+    cd ~/Downloads/athlix/app     && flutter test
+    cd ~/Downloads/athlix/admin   && flutter test
+
+
+COMMON PROBLEMS
+---------------
+"Cannot connect to the Docker daemon"   -> open Docker Desktop and wait, then retry step 1.
+"make: No rule to make target run"      -> you are in the wrong folder; cd ~/Downloads/athlix/backend
+Backend says "cannot reach redis/mysql" -> step 1 is not running (check with: docker ps).
+App shows "No connection... Try again"  -> backend (step 2) is not running.
+Photos don't load in the app            -> run again: ~/Library/Android/sdk/platform-tools/adb reverse tcp:8080 tcp:8080
+Can't type in the emulator              -> in Android Studio > Device Manager > Edit the device,
+                                           enable "Enable keyboard input".
+"Running multiple emulators..." error   -> an emulator is already open; use that one.
+Admin panel is a blank white page       -> you forgot --release (see step 5).
+Port 5000 in use                        -> that's AirPlay on macOS; the admin uses 5050 instead.
