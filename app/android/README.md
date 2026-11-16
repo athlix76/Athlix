@@ -92,6 +92,10 @@ Generated from `app/tool/brand` (see its README). After `flutter create`, restor
 - Typing with the Mac keyboard needs `hw.keyboard=yes` in
   `~/.android/avd/<name>.avd/config.ini` (restart the emulator after changing it).
 - Run: `flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8080/v1 --dart-define=ENV=local`.
+- Images (posts, avatars, proofs) are served by the local backend as `http://localhost:8080/dev/storage/...`
+  (`PUBLIC_API_BASE_URL`). Inside the emulator `localhost` is the emulator itself, so run
+  `adb reverse tcp:8080 tcp:8080` once per emulator boot; then those URLs reach your Mac and
+  images load (the admin panel in Chrome keeps working with the same URLs).
 
 ## Other
 

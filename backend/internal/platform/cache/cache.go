@@ -32,8 +32,9 @@ func New(o Options) (*redis.Client, func(), error) {
 		if err != nil {
 			return nil, nil, err
 		}
+		stop := followWallClock(mr, 250*time.Millisecond)
 		c := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-		return c, func() { _ = c.Close(); mr.Close() }, nil
+		return c, func() { stop(); _ = c.Close(); mr.Close() }, nil
 	}
 	ro := &redis.Options{Addr: addr, Password: o.Password, DialTimeout: 2 * time.Second, ReadTimeout: time.Second, WriteTimeout: time.Second}
 	if o.TLS {
@@ -46,4 +47,26 @@ func New(o Options) (*redis.Client, func(), error) {
 		return nil, nil, fmt.Errorf("cache: cannot reach redis")
 	}
 	return c, func() { _ = c.Close() }, nil
+}
+
+// followWallClock makes miniredis expire keys in real time. miniredis only advances its
+// TTL clock on FastForward, so without this an OTP cooldown or rate-limit window set by a
+// local API run would never end. Tests use their own miniredis and keep full control.
+func followWallClock(mr *miniredis.Miniredis, every time.Duration) (stop func()) {
+	done := make(chan struct{})
+	go func() {
+		t := time.NewTicker(every)
+		defer t.Stop()
+		last := time.Now()
+		for {
+			select {
+			case <-done:
+				return
+			case now := <-t.C:
+				mr.FastForward(now.Sub(last))
+				last = now
+			}
+		}
+	}()
+	return func() { close(done) }
 }

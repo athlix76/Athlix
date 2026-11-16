@@ -82,15 +82,12 @@ class _VerificationFormState extends ConsumerState<_VerificationForm> {
     super.dispose();
   }
 
-  List<StepInput> _stepInputs() => [
-        for (final s in v.steps)
-          switch (s.inputType) {
-            StepInputType.text => StepInput(stepId: s.stepId, valueText: _text[s.stepId]?.text.trim()),
-            StepInputType.checkbox => StepInput(stepId: s.stepId, checked: _checked[s.stepId] ?? false),
-            StepInputType.document => StepInput(stepId: s.stepId, documentUploadId: _docIds[s.stepId]),
-            _ => StepInput(stepId: s.stepId),
-          },
-      ];
+  List<StepInput> _stepInputs() => buildStepInputs(
+        v.steps,
+        text: {for (final e in _text.entries) e.key: e.value.text},
+        checked: _checked,
+        docIds: _docIds,
+      );
 
   String? get _orgNameValue {
     final t = _orgName.text.trim();
@@ -337,3 +334,26 @@ class _StatusBanner extends StatelessWidget {
     );
   }
 }
+
+/// The `steps` body of `PUT /organiser/verification` from the form state.
+///
+/// A document step is sent only when it has a document: the server rejects an entry without
+/// `documentUploadId` (and `0` would delete an earlier upload). Optional document steps may
+/// stay empty; required ones are enforced by the server on submit.
+@visibleForTesting
+List<StepInput> buildStepInputs(
+  List<VerificationStep> steps, {
+  required Map<int, String> text,
+  required Map<int, bool> checked,
+  required Map<int, int> docIds,
+}) =>
+    [
+      for (final s in steps)
+        if (s.inputType != StepInputType.document || docIds.containsKey(s.stepId))
+          switch (s.inputType) {
+            StepInputType.text => StepInput(stepId: s.stepId, valueText: text[s.stepId]?.trim()),
+            StepInputType.checkbox => StepInput(stepId: s.stepId, checked: checked[s.stepId] ?? false),
+            StepInputType.document => StepInput(stepId: s.stepId, documentUploadId: docIds[s.stepId]),
+            _ => StepInput(stepId: s.stepId),
+          },
+    ];

@@ -36,6 +36,31 @@ python3 -I scripts/smoke/core_flows_test.py http://127.0.0.1:8080/v1
 
 It ends with `ALL 28 CHECKS PASSED`. Same local setup as below.
 
+## Extended flows test (`extended_flows_test.py`, 57 checks)
+
+Phase 4 coverage of everything the other scripts skip: auth edge cases (wrong OTP, resend
+cooldown 429, refresh rotation, reuse of an old refresh token revokes the whole family, logout,
+tampered tokens), minors (guardian OTP consent, too-young refused, no stranger DMs until a mutual
+follow, followers-only profile, no ads), stats from the sport template (unknown key 422) and
+achievements, private profiles, privacy settings (hidden from search, DMs off), block, photo post,
+communities (open / approval / ban / admin removal), organiser tools (1-slot event: waitlist,
+event group chat, mark paid, withdraw promotes the waitlisted player), coach consultations
+(offer, request, accept, complete), premium mock purchase and ads (both switched on for the test
+and restored), and error handling (422 envelopes, malformed JSON 400, unknown route 404, >1 MB body).
+Same admin env vars as `smoke_test.py`; about 3 minutes (it waits out OTP cooldowns and the 15 s
+settings cache).
+
+## Data integrity check (`integrity_check.sql`)
+
+The schema has no foreign keys, so this query looks for orphaned rows (registrations, posts,
+comments, likes, messages, memberships, follows, orders, notifications), leftovers of deleted
+users (device tokens, visible messages) and counter drift (`registrations_count`,
+`followers_count`). Every row must print 0:
+
+```bash
+docker compose exec -T mysql mysql -uathlix -pathlix-local athlix -N < backend/scripts/smoke/integrity_check.sql
+```
+
 ## Admin flows test (`admin_flows_test.py`, 38 checks)
 
 Everything the admin panel does, through its API: dashboard; user search (masked mobile),

@@ -2,7 +2,10 @@
 
 Package cache creates the Redis client. REDIS_ADDR=miniredis starts an
 in-process Redis for local development and tests (never allowed outside
-ENV=local).
+ENV=local). That miniredis follows the wall clock (`followWallClock`, a 250 ms ticker
+calling `FastForward`) so TTLs expire as in a real Redis; without it an OTP resend
+cooldown or rate-limit window would never end during a local run. Unit tests create
+their own miniredis (`testutil`) and control time with `FastForward` themselves.
 
 Redis holds only short-lived, non-secret state: OTP request records (hashed
 OTP), rate-limit counters, WebSocket connection ids, ws tickets, DigiLocker
