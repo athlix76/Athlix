@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/config_providers.dart';
 import '../../../core/session/session_controller.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/athlix_logo.dart';
 
@@ -18,6 +19,8 @@ class SplashScreen extends ConsumerWidget {
     final Object? error = boot.hasError ? boot.error : session.loadError;
 
     return Scaffold(
+      // Navy like the native splash; the error view needs the light body.
+      backgroundColor: error != null ? null : AppTheme.navy,
       body: SafeArea(
         child: Center(
           child: error != null
@@ -28,14 +31,12 @@ class SplashScreen extends ConsumerWidget {
                     if (session.loadError != null) ref.read(sessionProvider.notifier).restore();
                   },
                 )
-              : Column(
+              : const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AthlixLogo(size: 96),
-                    const SizedBox(height: 16),
-                    Text('Athlix', style: Theme.of(context).textTheme.displaySmall),
-                    const SizedBox(height: 24),
-                    const CircularProgressIndicator(),
+                    AthlixWordmark(height: 150),
+                    SizedBox(height: 28),
+                    SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5)),
                   ],
                 ),
         ),

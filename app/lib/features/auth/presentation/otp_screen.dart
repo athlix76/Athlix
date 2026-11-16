@@ -9,6 +9,7 @@ import '../../../core/config/config_providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/busy_button.dart';
 import '../application/auth_flow_controller.dart';
+import 'auth_layout.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key});
@@ -53,44 +54,44 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       );
     }
     final wait = flow.resendInSeconds(DateTime.now());
-    return Scaffold(
-      appBar: AppBar(title: const Text('Verify OTP')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text('Enter the code sent to ${flow.maskedMobile}'),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _ctrl,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            autofillHints: const [AutofillHints.oneTimeCode],
-            maxLength: otpLength,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(labelText: 'OTP'),
-          ),
-          const SizedBox(height: 8),
-          BusyButton(
-            label: 'Verify',
-            onPressed: () async {
-              final otp = _ctrl.text.trim();
-              if (otp.isEmpty || (otpLength != null && otp.length != otpLength)) return;
-              await ref.read(authFlowProvider.notifier).verify(otp);
-              // The router redirect moves on once the session is signed in.
-            },
-          ),
-          const SizedBox(height: 8),
-          BusyButton(
-            label: wait > 0 ? 'Resend in ${wait}s' : 'Resend OTP',
-            style: BusyButtonStyle.text,
-            onPressed: wait > 0 ? null : () => ref.read(authFlowProvider.notifier).resend(),
-          ),
-          TextButton(
-            onPressed: () => context.go(Routes.authPhone),
-            child: const Text('Change number'),
-          ),
-        ],
-      ),
+    return AuthLayout(
+      title: 'Verify your number.',
+      subtitle: 'Enter the code sent to ${flow.maskedMobile}',
+      onBack: () => context.go(Routes.authPhone),
+      children: [
+        const FieldLabel('One-time code'),
+        TextField(
+          controller: _ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          autofillHints: const [AutofillHints.oneTimeCode],
+          maxLength: otpLength,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 10),
+          decoration: const InputDecoration(hintText: 'OTP', counterText: ''),
+        ),
+        const SizedBox(height: 20),
+        BusyButton(
+          label: 'Verify',
+          onPressed: () async {
+            final otp = _ctrl.text.trim();
+            if (otp.isEmpty || (otpLength != null && otp.length != otpLength)) return;
+            await ref.read(authFlowProvider.notifier).verify(otp);
+            // The router redirect moves on once the session is signed in.
+          },
+        ),
+        const SizedBox(height: 8),
+        BusyButton(
+          label: wait > 0 ? 'Resend in ${wait}s' : 'Resend OTP',
+          style: BusyButtonStyle.text,
+          onPressed: wait > 0 ? null : () => ref.read(authFlowProvider.notifier).resend(),
+        ),
+        TextButton(
+          onPressed: () => context.go(Routes.authPhone),
+          child: const Text('Change number'),
+        ),
+      ],
     );
   }
 }

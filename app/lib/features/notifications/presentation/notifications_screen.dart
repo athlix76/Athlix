@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/dates.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cursor_list_view.dart';
 import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../application/notification_routing.dart';
 import '../application/notifications_controller.dart';
 import '../data/notification_models.dart';
@@ -53,25 +55,43 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final api = ref.watch(notificationsApiProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_unread > 0 ? 'Notifications ($_unread)' : 'Notifications'),
-        actions: [
-          TextButton(
-            onPressed: _unread > 0 ? _markAll : null,
-            child: const Text('Mark all read'),
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          PageHero(
+            eyebrow: 'Notifications',
+            title: 'Your corner of sport.',
+            subtitle: _unread > 0
+                ? '$_unread new ${_unread == 1 ? 'update' : 'updates'} from your community.'
+                : 'You are all caught up.',
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 8, 2),
+            child: Row(
+              children: [
+                Expanded(child: Text('Recent activity', style: Theme.of(context).textTheme.titleMedium)),
+                TextButton.icon(
+                  onPressed: _unread > 0 ? _markAll : null,
+                  icon: const Icon(Icons.done, size: 18),
+                  label: const Text('Mark all read'),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: CursorListView<AppNotification>(
+              controller: _list,
+              fetch: (cursor) => api.list(cursor: cursor),
+              onPage: (page) {
+                final count = page.unreadCount;
+                if (count != null && count != _unread) setState(() => _unread = count);
+              },
+              emptyText: 'No notifications yet. Your next little win is worth celebrating.',
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              itemBuilder: (context, n, _) => _NotificationTile(n: n, onTap: () => _open(n)),
+            ),
           ),
         ],
-      ),
-      body: CursorListView<AppNotification>(
-        controller: _list,
-        fetch: (cursor) => api.list(cursor: cursor),
-        onPage: (page) {
-          final count = page.unreadCount;
-          if (count != null && count != _unread) setState(() => _unread = count);
-        },
-        emptyText: 'No notifications yet.',
-        separated: true,
-        itemBuilder: (context, n, _) => _NotificationTile(n: n, onTap: () => _open(n)),
       ),
     );
   }
@@ -85,17 +105,61 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListTile(
-      tileColor: n.isRead ? null : scheme.surfaceContainerHighest,
-      leading: Icon(_icon(n.type), color: n.isRead ? scheme.outline : scheme.primary),
-      title: Text(
-        n.title,
-        style: n.isRead ? null : const TextStyle(fontWeight: FontWeight.w600),
+    final theme = Theme.of(context);
+    final unread = !n.isRead;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: unread ? const Color(0xFF0C2030) : AppTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppTheme.line),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 21,
+                  backgroundColor: AppTheme.avatarBg,
+                  child: Icon(_icon(n.type), size: 20, color: AppTheme.avatarFg),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        n.title,
+                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: unread ? FontWeight.w800 : FontWeight.w600),
+                      ),
+                      if (n.body.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                      ],
+                      const SizedBox(height: 4),
+                      Text(timeAgo(n.createdAt), style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                if (unread)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, top: 16),
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(color: AppTheme.cyan, shape: BoxShape.circle),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
-      subtitle: n.body.isEmpty ? null : Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis),
-      trailing: Text(timeAgo(n.createdAt), style: Theme.of(context).textTheme.bodySmall),
-      onTap: onTap,
     );
   }
 

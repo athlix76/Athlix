@@ -5,10 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/models/policy.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/busy_button.dart';
 import '../application/auth_flow_controller.dart';
 import '../data/auth_api.dart';
-import '../../../core/widgets/athlix_logo.dart';
+import 'auth_layout.dart';
 
 class PhoneScreen extends ConsumerStatefulWidget {
   const PhoneScreen({super.key});
@@ -40,53 +41,54 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
+    final linkStyle = TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800);
+    return AuthLayout(
+      title: 'Welcome to Athlix.',
+      subtitle: 'Sign in with your mobile number to continue your sports journey.',
+      children: [
+        const FieldLabel('Mobile number'),
+        TextField(
+          controller: _ctrl,
+          keyboardType: TextInputType.phone,
+          autofillHints: const [AutofillHints.telephoneNumber],
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]'))],
+          decoration: InputDecoration(
+            hintText: '10-digit mobile number',
+            prefixText: '+91 ',
+            errorText: _error,
+          ),
+          onSubmitted: (_) => _submit(),
+        ),
+        const SizedBox(height: 20),
+        BusyButton(label: 'Send OTP', onPressed: _submit),
+        const SizedBox(height: 28),
+        const Divider(),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 48),
-            const Align(alignment: Alignment.centerLeft, child: AthlixLogo(size: 72)),
-            const SizedBox(height: 16),
-            Text('Athlix', style: Theme.of(context).textTheme.displaySmall),
-            const SizedBox(height: 8),
-            const Text('Sign in with your mobile number'),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _ctrl,
-              keyboardType: TextInputType.phone,
-              autofillHints: const [AutofillHints.telephoneNumber],
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]'))],
-              decoration: InputDecoration(
-                labelText: 'Mobile number',
-                prefixText: '+91 ',
-                errorText: _error,
+            const Icon(Icons.shield_outlined, size: 18, color: AppTheme.slate),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Wrap(
+                children: [
+                  const Text('By continuing you agree to the ', style: TextStyle(color: AppTheme.slate)),
+                  InkWell(
+                    onTap: () => context.push(Routes.policy(PolicyDocType.terms)),
+                    child: Text('Terms', style: linkStyle),
+                  ),
+                  const Text(' and ', style: TextStyle(color: AppTheme.slate)),
+                  InkWell(
+                    onTap: () => context.push(Routes.policy(PolicyDocType.privacy)),
+                    child: Text('Privacy Policy', style: linkStyle),
+                  ),
+                  const Text('.', style: TextStyle(color: AppTheme.slate)),
+                ],
               ),
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 16),
-            BusyButton(label: 'Send OTP', onPressed: _submit),
-            const SizedBox(height: 24),
-            Wrap(
-              alignment: WrapAlignment.center,
-              children: [
-                const Text('By continuing you agree to the '),
-                InkWell(
-                  onTap: () => context.push(Routes.policy(PolicyDocType.terms)),
-                  child: Text('Terms', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                ),
-                const Text(' and '),
-                InkWell(
-                  onTap: () => context.push(Routes.policy(PolicyDocType.privacy)),
-                  child: Text('Privacy Policy',
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                ),
-                const Text('.'),
-              ],
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

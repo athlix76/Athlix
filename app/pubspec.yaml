@@ -38,6 +38,30 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/athlix_icon.png
+    - assets/brand/athlix_wordmark.png
+    - assets/brand/athlix_mark.png
+  # Bundled (SIL OFL, licences in assets/fonts): headings Montserrat, body Manrope.
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-400.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope-500.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-600.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-700.ttf
+          weight: 700
+        - asset: assets/fonts/Manrope-800.ttf
+          weight: 800
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-600.ttf
+          weight: 600
+        - asset: assets/fonts/Montserrat-700.ttf
+          weight: 700
+        - asset: assets/fonts/Montserrat-800.ttf
+          weight: 800
   config:
     # iOS uses CocoaPods, not Swift Package Manager: under SwiftPM, Xcode 26+ refuses
     # SwiftyGif (pulled in by file_picker -> DKPhotoGallery) for its old Swift tools version.

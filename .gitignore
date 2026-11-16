@@ -51,3 +51,6 @@ infra/**/crash.log
 !backend/cmd/admincli/testdata/*.csv
 *.sql.gz
 exports/
+
+# Python bytecode from the smoke scripts
+__pycache__/

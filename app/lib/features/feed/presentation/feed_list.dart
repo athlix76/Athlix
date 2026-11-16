@@ -11,8 +11,8 @@ import 'post_card.dart';
 /// One feed (`GET /feed?mode=following|discover`) as a cursor list of [PostCard]s.
 ///
 /// The `home_feed` ad slot appears every `ads.feed_every_n_posts` posts, or once at the
-/// top when that is not set. [header] (for example the Home tab's quick links and
-/// featured events) scrolls with the posts, above the top ad.
+/// top when that is not set. [header] scrolls with the posts, above the top ad. Posts are
+/// separated by thin lines and the list ends with "You're all caught up".
 class FeedList extends ConsumerWidget {
   const FeedList({super.key, required this.mode, required this.controller, this.header});
 
@@ -43,7 +43,9 @@ class FeedList extends ConsumerWidget {
       emptyText: mode == FeedMode.following
           ? 'Follow players and coaches to see their posts here.'
           : 'No posts yet.',
-      padding: const EdgeInsets.only(bottom: 88),
+      padding: const EdgeInsets.only(bottom: 96),
+      separated: true,
+      endText: "You're all caught up",
       itemBuilder: (context, post, index) {
         final card = PostCard(
           post: post,

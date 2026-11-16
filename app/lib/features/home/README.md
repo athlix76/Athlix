@@ -6,8 +6,8 @@ The main tab shell and the Home tab.
 
 | Widget | Route | Notes |
 |---|---|---|
-| `HomeShell` | shell of `/home`, `/events`, `/search`, `/notifications`, `/me` | bottom `NavigationBar` (Home, Events, Search, Alerts, Me); tapping the active tab returns to its first screen; Alerts tab badge = unread notifications (`unreadNotificationsProvider`). Also keeps the unread chat count (`unreadChatProvider`) fresh for the Home chat icon: new / deleted message frames (1 s debounce), app resume and tab change. `CountBadge` is the shared 99+ badge |
-| `HomeScreen` | `/home` | the app's feed: app bar with greeting and chat icon (unread badge, opens `/chat`); Discover / Following tabs, each a `FeedList` (features/feed) whose header holds the search entry (switches to the Search tab), quick links (registrations, communities, consultations, premium) and up to 3 featured events (+ "See all events"); new-post button |
+| `HomeShell` | shell of `/home`, `/events`, `/search`, `/notifications`, `/me` | floating pill bottom bar over the navy + cyan-glow background (icons; the active tab on a cyan gradient pill with its label under it); tapping the active tab returns to its first screen; Notifications tab badge = unread notifications (`unreadNotificationsProvider`). Also keeps the unread chat count (`unreadChatProvider`) fresh for the Home chat icon: new / deleted message frames (1 s debounce), app resume and tab change. `CountBadge` is the shared 99+ badge |
+| `HomeScreen` | `/home` | the app's feed: header with the Athlix mark + name and a round chat button (unread badge, opens `/chat`); a "Following \| Latest" pill toggle over two `FeedList`s (features/feed, Following and Discover); the cyan "+" button adds a post. Quick links (registrations, communities, consultations, premium) are on the Profile tab |
 
 ## Endpoints
 

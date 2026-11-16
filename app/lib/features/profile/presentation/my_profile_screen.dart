@@ -6,6 +6,7 @@ import '../../../core/config/config_providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/session/session_controller.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/page_hero.dart';
 import '../../../core/widgets/section.dart';
 import '../application/profile_providers.dart';
 import '../data/profile_models.dart';
@@ -23,17 +24,30 @@ class MyProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myProfileProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Me'),
-        actions: [
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push(Routes.settings),
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          PageHero(
+            eyebrow: 'Your game. Your story.',
+            title: 'My profile',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                HeroIconButton(
+                  tooltip: 'Edit profile',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => context.push(Routes.meEdit),
+                ),
+                const SizedBox(width: 8),
+                HeroIconButton(
+                  tooltip: 'Settings',
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => context.push(Routes.settings),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: AsyncValueView<Profile?>(
+          Expanded(child: AsyncValueView<Profile?>(
         value: profile,
         onRetry: () => ref.invalidate(myProfileProvider),
         data: (p) => p == null
@@ -46,6 +60,8 @@ class MyProfileScreen extends ConsumerWidget {
                 },
                 child: _MyProfileBody(profile: p),
               ),
+          )),
+        ],
       ),
     );
   }
@@ -74,7 +90,7 @@ class _MyProfileBody extends ConsumerWidget {
         ProfileHeader(
           profile: profile,
           actions: [
-            FilledButton.tonalIcon(
+            OutlinedButton.icon(
               onPressed: () => context.push(Routes.meEdit),
               icon: const Icon(Icons.edit_outlined),
               label: const Text('Edit profile'),
@@ -87,7 +103,10 @@ class _MyProfileBody extends ConsumerWidget {
           ],
         ),
         if (profile.bio != null && profile.bio!.isNotEmpty)
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), child: Text(profile.bio!)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Text(profile.bio!, style: const TextStyle(height: 1.6)),
+          ),
 
         SectionHeader(
           'Stats',
@@ -142,6 +161,9 @@ class _MyProfileBody extends ConsumerWidget {
         _link(context, Icons.visibility_outlined, 'Who viewed my profile', Routes.meViewers),
         _link(context, Icons.dynamic_feed_outlined, 'My posts', Routes.userPosts(id)),
         _link(context, Icons.confirmation_number_outlined, 'My registrations', Routes.myRegistrations),
+        _link(context, Icons.groups_outlined, 'Communities', Routes.communities),
+        _link(context, Icons.sports_outlined, 'Consultations', Routes.consultations),
+        _link(context, Icons.workspace_premium_outlined, 'Premium', Routes.premium),
         if (isOrganiser) ...[
           _link(context, Icons.event_note_outlined, 'My events', Routes.myEvents),
           _link(context, Icons.verified_user_outlined, 'Organiser verification', Routes.organiserVerification),

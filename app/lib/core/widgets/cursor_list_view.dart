@@ -35,6 +35,7 @@ class CursorListView<T> extends StatefulWidget {
     this.onPage,
     this.padding,
     this.separated = false,
+    this.endText,
   });
 
   final PageFetcher<T> fetch;
@@ -47,6 +48,9 @@ class CursorListView<T> extends StatefulWidget {
   final void Function(Paged<T> page)? onPage;
   final EdgeInsetsGeometry? padding;
   final bool separated;
+
+  /// Shown under the last item once every page is loaded (e.g. "You're all caught up").
+  final String? endText;
 
   @override
   State<CursorListView<T>> createState() => _CursorListViewState<T>();
@@ -145,8 +149,8 @@ class _CursorListViewState<T> extends State<CursorListView<T>> {
     }
     final header = widget.header;
     final headerCount = header == null ? 0 : 1;
-    final footer = _hasMore || _error != null ? 1 : 0;
-    if (_items.isEmpty && footer == 0) {
+    final footer = _hasMore || _error != null || widget.endText != null ? 1 : 0;
+    if (_items.isEmpty && !_hasMore && _error == null) {
       return RefreshIndicator(
         onRefresh: _reload,
         child: ListView(
@@ -169,6 +173,16 @@ class _CursorListViewState<T> extends State<CursorListView<T>> {
           if (header != null && i == 0) return header;
           final index = i - headerCount;
           if (index >= _items.length) {
+            if (_error == null && !_hasMore) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: Text(
+                  widget.endText ?? '',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15),
+                ),
+              );
+            }
             if (_error != null) {
               return Padding(
                 padding: const EdgeInsets.all(16),

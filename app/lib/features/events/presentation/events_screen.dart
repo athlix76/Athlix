@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../core/session/session_controller.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cursor_list_view.dart';
+import '../../../core/widgets/page_hero.dart';
+import '../../../core/widgets/section.dart';
 import '../../ads/presentation/ad_slot.dart';
 import '../application/event_providers.dart';
 import '../data/event_api.dart';
@@ -37,45 +40,49 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     final filters = ref.watch(eventFiltersProvider);
     final me = ref.watch(meProvider);
     final api = ref.watch(eventApiProvider);
+    final organiser = me?.isOrganiser ?? false;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events'),
-        actions: [
-          IconButton(
-            tooltip: 'My registrations',
-            icon: const Icon(Icons.confirmation_number_outlined),
-            onPressed: () => context.push(Routes.myRegistrations),
-          ),
-          if (me?.isOrganiser ?? false)
-            IconButton(
-              tooltip: 'My events',
-              icon: const Icon(Icons.event_note_outlined),
-              onPressed: () => context.push(Routes.myEvents),
-            ),
-        ],
-      ),
-      floatingActionButton: (me?.isOrganiser ?? false)
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push(Routes.eventNew),
-              icon: const Icon(Icons.add),
-              label: const Text('Create event'),
-            )
-          : null,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
+          PageHero(
+            eyebrow: 'Tournaments',
+            title: 'Find your next challenge.',
+            subtitle: 'Local grounds. Big moments. Your game starts here.',
+            bottom: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                if (organiser)
+                  HeroButton(
+                    icon: Icons.add,
+                    label: 'Host an event',
+                    primary: true,
+                    onPressed: () => context.push(Routes.eventNew),
+                  ),
+                if (organiser)
+                  HeroButton(
+                    icon: Icons.event_note_outlined,
+                    label: 'My events',
+                    onPressed: () => context.push(Routes.myEvents),
+                  ),
+                HeroButton(
+                  icon: Icons.confirmation_number_outlined,
+                  label: 'My tournaments',
+                  onPressed: () => context.push(Routes.myRegistrations),
+                ),
+              ],
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _search,
                     textInputAction: TextInputAction.search,
-                    decoration: const InputDecoration(
-                      hintText: 'Search events',
-                      prefixIcon: Icon(Icons.search),
-                      isDense: true,
-                    ),
+                    decoration: searchFieldDecoration('Search tournaments, sports or cities'),
                     onSubmitted: (v) => _setFilters(filters.withQuery(v.trim().isEmpty ? null : v.trim())),
                   ),
                 ),
@@ -86,6 +93,12 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   child: IconButton.outlined(
                     tooltip: 'Filters',
                     icon: const Icon(Icons.tune),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.surface,
+                      side: const BorderSide(color: AppTheme.line),
+                      fixedSize: const Size(50, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
                     onPressed: () async {
                       final f = await showEventFiltersSheet(context, filters);
                       if (f != null) _setFilters(f);
@@ -100,7 +113,14 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             child: CursorListView<EventSummary>(
               key: ValueKey(filters),
               fetch: (cursor) => api.list(filters, cursor: cursor),
-              header: AdSlot(placement: AdPlacement.eventsList, sportId: filters.sportId, state: filters.state),
+              header: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SectionHeader('Upcoming tournaments'),
+                  AdSlot(placement: AdPlacement.eventsList, sportId: filters.sportId, state: filters.state),
+                ],
+              ),
               emptyText: filters.showAll
                   ? 'No events match. Try other filters.'
                   : 'No events you can join match. Try other filters or "Show all events".',

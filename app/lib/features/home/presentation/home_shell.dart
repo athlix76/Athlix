@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/ws/chat_socket.dart';
 import '../../chat/application/chat_socket_provider.dart';
 import '../../notifications/application/notifications_controller.dart';
@@ -26,7 +27,8 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserver {
+class _HomeShellState extends ConsumerState<HomeShell>
+    with WidgetsBindingObserver {
   StreamSubscription<ServerFrame>? _frames;
   Timer? _debounce;
 
@@ -79,23 +81,144 @@ class _HomeShellState extends ConsumerState<HomeShell> with WidgetsBindingObserv
     });
     final unread = ref.watch(unreadNotificationsProvider).valueOrNull ?? 0;
 
-    return Scaffold(
-      body: widget.navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: widget.navigationShell.currentIndex,
-        onDestinationSelected: _select,
-        destinations: [
-          const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          const NavigationDestination(icon: Icon(Icons.event_outlined), selectedIcon: Icon(Icons.event), label: 'Events'),
-          const NavigationDestination(icon: Icon(Icons.search_outlined), selectedIcon: Icon(Icons.search), label: 'Search'),
-          NavigationDestination(
-            icon: CountBadge(count: unread, child: const Icon(Icons.notifications_outlined)),
-            selectedIcon: CountBadge(count: unread, child: const Icon(Icons.notifications)),
-            label: 'Alerts',
-            tooltip: unread > 0 ? 'Notifications, $unread unread' : 'Notifications',
+    return ColoredBox(
+      color: AppTheme.navy,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppTheme.glowTop),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(gradient: AppTheme.glowBottom),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: widget.navigationShell,
+            bottomNavigationBar: _BottomNav(
+              index: widget.navigationShell.currentIndex,
+              onSelect: _select,
+              unread: unread,
+            ),
           ),
-          const NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Me'),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating pill bottom bar: icons only, the active tab on a cyan gradient pill with its
+/// label in cyan under it, and a soft cyan glow under the bar.
+class _BottomNav extends StatelessWidget {
+  const _BottomNav(
+      {required this.index, required this.onSelect, required this.unread});
+
+  final int index;
+  final ValueChanged<int> onSelect;
+  final int unread;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (Icons.home_outlined, 'Home'),
+      (Icons.calendar_month_outlined, 'Events'),
+      (Icons.search, 'Search'),
+      (Icons.notifications_none, 'Notifications'),
+      (Icons.person_outline, 'Profile'),
+    ];
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+        child: Container(
+          height: 76,
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(38),
+            border: Border.all(color: AppTheme.softBlueLine),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x4005CDE0),
+                  blurRadius: 28,
+                  spreadRadius: -6,
+                  offset: Offset(0, 6)),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            children: [
+              for (var i = 0; i < items.length; i++)
+                Expanded(
+                  child: _NavItem(
+                    icon: items[i].$1,
+                    label: items[i].$2,
+                    selected: i == index,
+                    badge: i == 3 ? unread : 0,
+                    onTap: () => onSelect(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final int badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: badge > 0 ? '$label, $badge unread' : label,
+      excludeSemantics: true,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 34,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: selected ? 64 : 44,
+              height: selected ? 34 : 40,
+              decoration: BoxDecoration(
+                gradient: selected ? AppTheme.cyanGradient : null,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              alignment: Alignment.center,
+              child: CountBadge(
+                count: badge,
+                child: Icon(icon,
+                    size: 25, color: selected ? AppTheme.navy : AppTheme.slate),
+              ),
+            ),
+            if (selected) ...[
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.cyan,
+                    fontWeight: FontWeight.w700),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

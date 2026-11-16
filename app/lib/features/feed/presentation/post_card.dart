@@ -75,83 +75,176 @@ class _PostCardState extends ConsumerState<PostCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final body = p.body;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: widget.openOnTap ? () => context.push(Routes.post(p.id)) : null,
+    final a = p.author;
+    final sport = a.sport?.name;
+    final rest = [
+      if ((a.city ?? '').isNotEmpty) a.city!,
+      timeAgo(p.createdAt),
+      if (p.visibility == PostVisibility.followers) 'Followers',
+    ].where((s) => s.isNotEmpty).join(' · ');
+    return InkWell(
+      onTap: widget.openOnTap ? () => context.push(Routes.post(p.id)) : null,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 12, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              leading: UserAvatar(name: p.author.displayName, url: p.author.photoUrl),
-              title: Row(
+            // Author row: ringed avatar, name (+ verified), sport (cyan) · city · time, menu.
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.push(Routes.profile(a.id)),
+              child: Row(
                 children: [
-                  Flexible(child: Text(p.author.displayName, overflow: TextOverflow.ellipsis)),
-                  if (p.author.isVerified) ...[
-                    const SizedBox(width: 4),
-                    Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
-                  ],
-                ],
-              ),
-              subtitle: Text([
-                timeAgo(p.createdAt),
-                if (p.visibility == PostVisibility.followers) 'Followers',
-              ].join(' · ')),
-              onTap: () => context.push(Routes.profile(p.author.id)),
-              trailing: PopupMenuButton<String>(
-                onSelected: (v) {
-                  if (v == 'delete') _delete();
-                  if (v == 'report') {
-                    showReportSheet(context, targetType: ReportTarget.post, targetId: p.id);
-                  }
-                },
-                itemBuilder: (_) => [
-                  if (p.isOwn) const PopupMenuItem(value: 'delete', child: Text('Delete'))
-                  else const PopupMenuItem(value: 'report', child: Text('Report')),
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: theme.colorScheme.primary, width: 2.5),
+                    ),
+                    child: UserAvatar(name: a.displayName, url: a.photoUrl, radius: 23),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                a.displayName,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            if (a.isVerified) ...[
+                              const SizedBox(width: 5),
+                              Icon(Icons.verified, size: 17, color: theme.colorScheme.primary),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text.rich(
+                          TextSpan(children: [
+                            if (sport != null)
+                              TextSpan(text: sport, style: TextStyle(color: theme.colorScheme.primary)),
+                            if (sport != null && rest.isNotEmpty) const TextSpan(text: ' · '),
+                            TextSpan(text: rest),
+                          ]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: 'More',
+                    onSelected: (v) {
+                      if (v == 'delete') _delete();
+                      if (v == 'report') {
+                        showReportSheet(context, targetType: ReportTarget.post, targetId: p.id);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (p.isOwn) const PopupMenuItem(value: 'delete', child: Text('Delete'))
+                      else const PopupMenuItem(value: 'report', child: Text('Report')),
+                    ],
+                  ),
                 ],
               ),
             ),
             if (body != null && body.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(body),
+                padding: const EdgeInsets.fromLTRB(0, 16, 8, 0),
+                child: Text(body, style: const TextStyle(fontSize: 17, height: 1.45)),
               ),
-            if (p.images.isNotEmpty) _Images(urls: p.images),
+            if (p.images.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 16, 8, 0),
+                child: ClipRRect(borderRadius: BorderRadius.circular(20), child: _Images(urls: p.images)),
+              ),
             if (p.sport != null || p.eventId != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                padding: const EdgeInsets.only(top: 12, right: 8),
                 child: Wrap(
                   spacing: 8,
                   children: [
-                    if (p.sport != null) Chip(label: Text(p.sport!.name)),
+                    if (p.sport != null) Chip(label: Text(p.sport!.name), visualDensity: VisualDensity.compact),
                     if (p.eventId != null)
                       ActionChip(
                         avatar: const Icon(Icons.event, size: 18),
                         label: const Text('View event'),
+                        visualDensity: VisualDensity.compact,
                         onPressed: () => context.push(Routes.event(p.eventId!)),
                       ),
                   ],
                 ),
               ),
+            const SizedBox(height: 14),
             Row(
               children: [
-                TextButton.icon(
-                  onPressed: _liking ? null : _toggleLike,
-                  icon: Icon(
-                    p.likedByMe ? Icons.favorite : Icons.favorite_border,
-                    color: p.likedByMe ? theme.colorScheme.error : null,
-                  ),
-                  label: Text('${p.likeCount}'),
+                _Action(
+                  icon: p.likedByMe ? Icons.favorite : Icons.favorite_border,
+                  color: p.likedByMe ? const Color(0xFFF43F5E) : null,
+                  count: p.likeCount,
+                  tooltip: p.likedByMe ? 'Unlike' : 'Like',
+                  onTap: _liking ? null : _toggleLike,
                 ),
-                TextButton.icon(
-                  onPressed: widget.openOnTap ? () => context.push(Routes.post(p.id)) : null,
-                  icon: const Icon(Icons.mode_comment_outlined),
-                  label: Text('${p.commentCount}'),
+                const SizedBox(width: 10),
+                _Action(
+                  icon: Icons.chat_bubble_outline,
+                  count: p.commentCount,
+                  tooltip: 'Comments',
+                  onTap: widget.openOnTap ? () => context.push(Routes.post(p.id)) : null,
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Round outlined action button; shows the count next to the icon when there is one.
+class _Action extends StatelessWidget {
+  const _Action({required this.icon, required this.count, required this.tooltip, this.onTap, this.color});
+
+  final IconData icon;
+  final int count;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: scheme.surfaceContainer,
+        shape: StadiumBorder(side: BorderSide(color: scheme.outline)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 64),
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 24, color: color ?? scheme.onSurface),
+                if (count > 0) ...[
+                  const SizedBox(width: 8),
+                  Text('$count', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

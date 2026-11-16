@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Round avatar from a signed photo URL, with initials as the fallback.
 class UserAvatar extends StatelessWidget {
   const UserAvatar({super.key, required this.name, this.url, this.radius = 20});
@@ -22,8 +24,20 @@ class UserAvatar extends StatelessWidget {
     final u = url;
     return CircleAvatar(
       radius: radius,
+      backgroundColor: AppTheme.avatarBg,
+      foregroundColor: AppTheme.avatarFg,
       backgroundImage: u == null || u.isEmpty ? null : CachedNetworkImageProvider(u),
-      child: u == null || u.isEmpty ? Text(_initials, style: TextStyle(fontSize: radius * 0.7)) : null,
+      child: u == null || u.isEmpty
+          ? Text(
+              _initials,
+              style: TextStyle(
+                fontFamily: AppTheme.headingFont,
+                fontWeight: FontWeight.w800,
+                fontSize: radius * 0.62,
+                color: AppTheme.avatarFg,
+              ),
+            )
+          : null,
     );
   }
 }
